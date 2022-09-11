@@ -1,0 +1,15 @@
+{
+  "type": "module",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@iuser/node-loader": "^0.0.20",
+    "@iuser/read": "^0.0.5",
+    "@iuser/write": "^0.0.6",
+    "@rmw/thisdir": "^0.0.2",
+    "coffee_plus": "^0.0.39",
+    "dotenv": "^16.0.2",
+    "esbuild": "^0.15.7",
+    "nanoid": "^4.0.0",
+    "zx": "^7.0.8"
+  }
+}

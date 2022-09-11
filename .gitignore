@@ -1,0 +1,7 @@
+node_modules/
+lib/
+/.env
+
+sh/*.js
+docker/data/
+docker/docker-compose.yml

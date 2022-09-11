@@ -1,0 +1,79 @@
+version: '3'
+
+services:
+  pg-log:
+    image: postgres:14-alpine
+    volumes:
+      - /var/log/docker/api.user.tax/pg:/log
+    restart: 'no'
+    entrypoint: chown -R postgres:postgres /log
+  pg:
+    image: postgres:14-alpine
+    volumes:
+      - ./data/pg:/var/lib/postgresql/data
+      - /var/log/docker/api.user.tax/pg:/log
+    restart: always
+    environment:
+      POSTGRES_DB: ${PG_DB}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_USER: ${PG_USER}
+      PGPORT: ${PG_PORT}
+    depends_on:
+      - pg-log
+    ports:
+      - ${PG_PORT}:${PG_PORT}
+    command: >
+      postgres -c logging_collector=on -c log_destination=stderr -c log_directory=/log
+  kvrocks:
+    build: ./Dockerfile/kvrocks
+    restart: always
+    environment:
+      kvrocks_requirepass: ${REDIS_PASSWORD}
+      kvrocks_workers: ${CPU_NUM}
+      kvrocks_port: ${REDIS_PORT}
+      kvrocks_log_dir: /log
+      kvrocks_rocksdb_enable_blob_files: "yes"
+    volumes:
+      - ./data/kvrocks:/var/lib/kvrocks
+      - /var/log/docker/api.user.tax/kvrocks:/log
+    ports:
+      - ${REDIS_PORT}:${REDIS_PORT}
+  api:
+    build: ./Dockerfile/api.user.tax
+    restart: always
+    depends_on:
+      - pg
+      - kvrocks
+    environment:
+      PG_HOST: ${PG_HOST}
+      PG_DB: ${PG_DB}
+      PG_USER: ${PG_USER}
+      PG_PORT: ${PG_PORT}
+      PG_POOL_CONN: ${PG_POOL_CONN}
+      PG_PASSWORD: ${PG_PASSWORD}
+      LOG_HOST: ${LOG_HOST}
+      LOG_DB: ${LOG_DB}
+      LOG_USER: ${LOG_USER}
+      LOG_PORT: ${LOG_PORT}
+      LOG_POOL_CONN: ${LOG_POOL_CONN}
+      LOG_PASSWORD: ${LOG_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_DB: ${REDIS_DB}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PORT: ${REDIS_PORT}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_TLS: ${SMTP_TLS}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      API_PORT: ${API_PORT}
+      API_HTTPS: ${API_HTTPS}
+      CPU_NUM: ${CPU_NUM}
+    volumes:
+      - ./api:/api
+    links:
+      - pg:pg
+      - kvrocks:redis
+    ports:
+      - ${API_PORT}:${API_PORT}
+      - ${API_HTTPS}:${API_HTTPS}
